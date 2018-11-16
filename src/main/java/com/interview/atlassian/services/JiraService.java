@@ -11,8 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.Arrays;
-import java.util.HashMap;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 
 /**
  * JiraService abstracts the apis for Jira, and the aggregative functions over it;
@@ -48,8 +48,8 @@ public class JiraService {
      */
     public Issue[] fetchIssues(String searchQuery) {
         try {
-            ResponseEntity<Issue[]> responseEntity = restTemplate.getForEntity(env.getProperty("jira.base.url") + JIRA_ISSUE_URL + searchQuery, Issue[].class);
-            Object[] objects = responseEntity.getBody();
+            String url = buildGetJiraIssuesUrl(searchQuery);
+            ResponseEntity<Issue[]> responseEntity = restTemplate.getForEntity(url, Issue[].class);
             HttpStatus statusCode = responseEntity.getStatusCode();
             if (statusCode.is2xxSuccessful()) {
                 return responseEntity.getBody();
@@ -59,5 +59,17 @@ public class JiraService {
         }
 
         throw new RuntimeException("Unable to fetch details from jira api");
+    }
+
+    /**
+     * Builds the Jira Issues Get Url
+     * @param searchQuery
+     * @return
+     * @throws UnsupportedEncodingException
+     */
+    private String buildGetJiraIssuesUrl(String searchQuery) throws UnsupportedEncodingException {
+        String encodeSearchQuery= URLEncoder.encode( searchQuery, "UTF-8" );
+        String url = env.getProperty("jira.base.url") + JIRA_ISSUE_URL + encodeSearchQuery;
+        return url;
     }
 }
